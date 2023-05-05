@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package>
+    <metadata>
+        <id>NervousMotions.Forms.ReactiveRealmCaching</id>
+        <version>1.0.2</version>
+        <title>$title$</title>
+        <authors>Brewer</authors>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <license type="expression">MIT</license>
+        <!-- <icon>icon.png</icon> -->
+        <projectUrl>https://github.com/Nerves82/NervousMotions.Forms.ReactiveRealmCaching</projectUrl>
+        <description>Caching framework using reactive and realm</description>
+        <releaseNotes>first release</releaseNotes>
+        <copyright>$copyright$</copyright>
+    </metadata>
+</package>

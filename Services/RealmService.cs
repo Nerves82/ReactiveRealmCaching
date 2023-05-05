@@ -1,8 +1,10 @@
+
 using System.Linq.Expressions;
 using AutoMapper;
+using ReactiveRealmCaching.Interfaces;
 using Realms;
 
-namespace ReactiveRealmCaching;
+namespace ReactiveRealmCaching.Services;
 
 public class RealmService : IRealmService
     {

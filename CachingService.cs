@@ -1,276 +1,20 @@
 
-
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
-using System.Diagnostics.Contracts;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Reactive;
 using System.Reactive.Concurrency;
-using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
-using System.Threading;
-using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using ReactiveRealmCaching.Interfaces;
+using ReactiveRealmCaching.Services;
 using Realms;
+using Xamarin.Essentials;
 
 namespace ReactiveRealmCaching
 {
-    
-  
-    
-    
-    public interface IHaveAnObjectId
-    {
-        string? ObjectId { get; }
-    }
-    
-    public interface ICanSync : IHaveAnObjectId
-    {
-        bool ShouldSync { get; set; }
-    }
-    
-    public interface ICanBeDeleted
-    {
-        bool IsMarkedForDeletion { get; set; }
-    }
-    
-    public interface ISyncResult<T>
-    {
-        bool DidError { get; set; }
-        Exception? Exception { get; set; }
-        T Object { get; set; }
-    }
-    
-    public interface IRealmService
-    {
-        /// <summary>
-        /// Initializes user realm database
-        /// </summary>
-        /// <returns></returns>
-        Realm CreateUserRealm();
-
-        /// <summary>
-        /// Reads Entity data using the optional predicate and returns the converted mapped item.
-        /// </summary>
-        /// <typeparam name="TMapped"></typeparam>
-        /// <typeparam name="TEntity"></typeparam>
-        /// <param name="expression"></param>
-        /// <param name="filterClause"></param>
-        /// <returns></returns>
-        TMapped ReadFromRealmSingle<TMapped, TEntity>(Expression<Func<TEntity, bool>>? expression, string? filterClause = null) where TEntity : RealmObject;
-
-        /// <summary>
-        /// Reads Entity data using the optional predicate and returns the converted mapped item list.
-        /// </summary>
-        /// <typeparam name="TMapped"></typeparam>
-        /// <typeparam name="TEntity"></typeparam>
-        /// <param name="expression"></param>
-        /// <param name="filterClause"></param>
-        /// <returns></returns>
-        IList<TMapped> ReadFromRealmMany<TMapped, TEntity>(Expression<Func<TEntity, bool>>? expression,
-            string? filterClause = null)
-            where TEntity : RealmObject;
-        
-        /// <summary>
-        /// Reads Entity data using the optional Realm Filter Clause and returns the converted mapped item list.
-        /// </summary>
-        /// <typeparam name="TMapped"></typeparam>
-        /// <typeparam name="TEntity"></typeparam>
-        /// <param name="filterClause"></param>
-        /// <returns></returns>
-        IList<TMapped> ReadFromRealmManyFilter<TMapped, TEntity>(string filterClause) where TEntity : RealmObject;
-
-        /// <summary>
-        /// Writes the mapped item to the database.
-        /// </summary>
-        /// <typeparam name="TMapped"></typeparam>
-        /// <typeparam name="TEntity"></typeparam>
-        /// <param name="mapped"></param>
-        /// <returns></returns>
-        TMapped WriteToRealmSingle<TMapped, TEntity>(TMapped mapped) where TEntity : RealmObject;
-
-        /// <summary>
-        /// Writes the mapped item list to the database.
-        /// </summary>
-        /// <typeparam name="TMapped"></typeparam>
-        /// <typeparam name="TEntity"></typeparam>
-        /// <param name="mappedList"></param>
-        /// <returns></returns>
-        IList<TMapped> WriteToRealmMany<TMapped, TEntity>(IList<TMapped> mappedList) where TEntity : RealmObject;
-
-        /// <summary>
-        /// Get the total count for a specified Realm type
-        /// </summary>
-        /// <typeparam name="TEntity"></typeparam>
-        /// <param name="expression"></param>
-        /// <returns></returns>
-        int GetRealmCount<TEntity>(Expression<Func<TEntity, bool>>? expression = null) where TEntity : RealmObject;
-
-        /// <summary>
-        /// Updates the mapped item as marked for deletion to the database.
-        /// </summary>
-        /// <typeparam name="TMapped"></typeparam>
-        /// <typeparam name="TEntity"></typeparam>
-        /// <param name="expression"></param>
-        /// <returns></returns>
-        IList<TMapped> MarkAsDeletedRealm<TMapped, TEntity>(Expression<Func<TEntity, bool>>? expression) where TEntity : RealmObject, ICanBeDeleted;
-
-         /// <summary>
-        /// Removes the Entity item list from the database based on the predicate.
-        /// </summary>
-        /// <typeparam name="TEntity"></typeparam>
-        /// <param name="expression"></param>
-        void RemoveFromRealmMany<TEntity>(Expression<Func<TEntity, bool>> expression) where TEntity : RealmObject;
-
-         /// <summary>
-         /// Removes the Entity item from the database based on the predicate.
-         /// </summary>
-         /// <typeparam name="TEntity"></typeparam>
-         /// <param name="expression"></param>
-         void RemoveFromRealmSingle<TEntity>(Expression<Func<TEntity, bool>> expression) where TEntity : RealmObject;
-
-        /// <summary>
-        /// Removes the Entity item list from the database that are marked for deletion.
-        /// </summary>
-        /// <typeparam name="TEntity"></typeparam>
-        void RemoveDeletedFromRealmMany<TEntity>() where TEntity : RealmObject, ICanBeDeleted;
-
-        /// <summary>
-        /// Returns the same object as the one referenced when the Realms.ThreadSafeReference.Object`1 
-        /// was first created, but resolved for the current Realm for this thread. 
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="reference"></param>
-        /// <returns></returns>
-        T ResolveReference<T>(ThreadSafeReference.Object<T>? reference) where T : RealmObjectBase;
-
-        /// <summary>
-        /// Returns the same collection as the one referenced when the Realms.ThreadSafeReference.List`1
-        /// was first created, but resolved for the current Realm for this thread.
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="reference"></param>
-        /// <returns></returns>
-        IList<T> ResolveReference<T>(ThreadSafeReference.List<T>? reference) where T : RealmObjectBase;
-
-        /// <summary>
-        /// Edits a group of entities and returns the edited list
-        /// </summary>
-        /// <typeparam name="TMapped"></typeparam>
-        /// <typeparam name="TEntity"></typeparam>
-        /// <param name="expression"></param>
-        /// <param name="edit"></param>
-        /// <returns></returns>
-        IList<TMapped> EditListRealmMany<TMapped, TEntity>(Expression<Func<TEntity, bool>>? expression,
-            Func<TEntity, object> edit)
-            where TEntity : RealmObject;
-
-        event EventHandler<string> RealmChanged;
-    }
-
-
-    public interface ICachingService
-    {
-        Task<bool> CheckIfEndpointExistsAsync(Uri url);
-
-        /// <summary>
-        /// Gets local data asynchronously from the fetchFromDomLibTask 
-        /// and simultaneously requests remote data asynchronously from the fetchFromApiTask. If there is 
-        /// updated data from the remote request, the remote data will get updated on the local database.
-        /// </summary>
-        /// <typeparam name="TAppModel">Domain type for the application</typeparam>
-        /// <typeparam name="TDto">Domain type for the remote data request</typeparam>
-        /// <param name="fetchFromApiTask"></param>
-        /// <param name="storeToDomLibTask"></param>
-        /// <param name="fetchFromDomLibTask"></param>
-        /// <returns></returns>
-        IObservable<TAppModel> GetAndFetchLatestItem<TAppModel, TDto>(Func<Task<TDto>> fetchFromApiTask,
-            Func<TAppModel, TAppModel> storeToDomLibTask,
-            Func<Task<TAppModel>> fetchFromDomLibTask);
-
-        IObservable<TAppModel> GetAndFetchLatestItem<TAppModel, TEntity, TDto>(Func<Task<TDto>> fetchTask, 
-            Expression<Func<TEntity, bool>> cacheValidationPredicate = null, 
-            bool includeLocalDeletes = false, 
-            Func<TAppModel, TAppModel> preCachingOperation = null,
-            string filterClause = null) where TEntity : RealmObject, IHaveAnObjectId, ICanBeDeleted;
-
-        Task InsertAsync<TAppModel, TEntity>(TAppModel item)
-            where TEntity : RealmObject;
-
-        Task BulkInsertAsync<TAppModel, TEntity>(IEnumerable<TAppModel> items)
-            where TEntity : RealmObject;
-
-        IObservable<TResult> SaveAndPush<TAppModel, TEntity, TDto, TFetchResult, TResult>(Func<TDto, Task<TFetchResult>> pushTask,
-            Func<TFetchResult, TAppModel> storeToRealm, TAppModel item)
-            where TEntity : RealmObject, ICanSync
-            where TFetchResult : ISyncResult<TDto>
-            where TResult : ISyncResult<TAppModel>;
-
-        /// <summary>
-        /// Gets local data asynchronously from the fetchFromDomLibTask 
-        /// and simultaneously requests remote data asynchronously from the fetchFromApiTask. If there is 
-        /// updated data from the remote request, the remote data will get updated on the local database.
-        /// </summary>
-        /// <typeparam name="TAppModel">Domain collection type for the application</typeparam>
-        /// <typeparam name="TDto">Domain collection type for the remote data request</typeparam>
-        /// <param name="fetchFromApiTask"></param>
-        /// <param name="storeToDomLibTask"></param>
-        /// <param name="fetchFromDomLibTask"></param>
-        /// <returns></returns>
-        IObservable<IList<TAppModel>> GetAndFetchLatestList<TAppModel, TDto>(
-            Func<Task<IList<TDto>>> fetchFromApiTask,
-            Func<IList<TAppModel>, IList<TAppModel>> storeToDomLibTask,
-            Func<Task<IList<TAppModel>>> fetchFromDomLibTask);
-
-        /// <summary>
-        /// Gets data from the local database via fetchFromDomLibTask, and simultaneously requests source data 
-        /// asynchronously from fetchFromApiTask. If there is updated data from the source request, storeToDomLibTask
-        /// will be called to allow the caller to persist that data back to the local database, and fetchFromDomLibTask
-        /// will be called again to allow the caller to return the updated local data as the final method result.
-        /// </summary>
-        /// <typeparam name="TAppModel">Domain collection type for the application</typeparam>
-        /// <typeparam name="TDto">Domain type for the source data request</typeparam>
-        /// <param name="fetchFromApiTask"></param>
-        /// <param name="storeToDomLibTask"></param>
-        /// <param name="fetchFromDomLibTask"></param>
-        /// <returns></returns>
-        IObservable<IList<TAppModel>> GetAndFetchLatestList<TAppModel, TDto>(
-            Func<Task<IList<TDto>>> fetchFromApiTask,
-            Action<IList<TDto>> storeToDomLibTask,
-            Func<Task<IList<TAppModel>>> fetchFromDomLibTask);
-
-        /// <summary>
-        /// Gets data from the local database and simultaneously requests source data asynchronously from 
-        /// the fetchTask. If there is updated data from the source request, the source data will get updated 
-        /// on the local database.
-        /// </summary>
-        /// <typeparam name="TAppModel">Domain collection type for the application</typeparam>
-        /// <typeparam name="TEntity">Domain collection type for the local storage</typeparam>
-        /// <typeparam name="TDto">Domain type for the source data request</typeparam>
-        /// <param name="fetchTask"></param>
-        /// <param name="cacheValidationPredicate"></param>
-        /// <param name="includeLocalDeletes"></param>
-        /// <param name="preCachingOperation"></param>
-        /// <param name="filterClause"></param>
-        /// <returns></returns>
-        IObservable<IList<TAppModel>> GetAndFetchLatestList<TAppModel, TEntity, TDto>(Func<Task<IList<TDto>>> fetchTask,
-            Expression<Func<TEntity, bool>> cacheValidationPredicate = null,
-            bool includeLocalDeletes = false,
-            Func<IList<TAppModel>, IList<TAppModel>> preCachingOperation = null,
-            string filterClause = null)
-            where TEntity : RealmObject, IHaveAnObjectId, ICanBeDeleted;
-
-        Task FetchLatestAsync<TDto, TEntity>(Func<Task<IList<TDto>>> fetchTask, Expression<Func<TEntity, bool>> cacheValidationPredicate = null) where TEntity : RealmObject, IHaveAnObjectId, ICanBeDeleted;
-        T ResolveEntity<T>(ThreadSafeReference.Object<T> entity) where T : RealmObject;
-        IList<T> ResolveEntityList<T>(ThreadSafeReference.List<T> entities) where T : RealmObject;
-    }
-
     public class CachingService : ICachingService
     {
         public async Task<bool> CheckIfEndpointExistsAsync(Uri? url)
@@ -289,32 +33,32 @@ namespace ReactiveRealmCaching
         // private readonly IReplayService _replayService;
         // private readonly ISyncStatusService _syncStatusService;
 
-        public CachingService()
-        {
-            // _realmService = realmService;
-            // _syncStatusService = syncStatusService;
-            // _mapper = mapper;
-            // _urlEndPointConnectivity = urlEndPointConnectivity;
-            // _replayService = replayService;
-        }
-        
-        public async Task Setup(MapperConfiguration mappingConfig)
+        public CachingService(MapperConfiguration mapperConfiguration)
         {
             var host = new HostBuilder()
                 .ConfigureHostConfiguration(c =>
                 {
-                    c.AddCommandLine(new string[] { $"ContentRoot={FileSystem.AppDataDirectory}" });
+                    c.AddCommandLine(new [] { $"ContentRoot={FileSystem.AppDataDirectory}" });
                     // c.AddJsonStream(stream);
                 })
                 // .ConfigureServices(configureServices)
                 .ConfigureServices((c, x) =>
                 {
                     x.AddSingleton<IRealmService, RealmService>();
-                    x.AddSingleton(provider => mappingConfig.CreateMapper());
+                    x.AddSingleton(provider => mapperConfiguration.CreateMapper());
                 });
             
-            _hostBuilder = host;
-            _serviceProvider = host.Build().Services;
+                _hostBuilder = host;
+                _serviceProvider = host.Build().Services;
+            
+            
+            
+            
+            // _realmService = realmService;
+            // _syncStatusService = syncStatusService;
+            // _mapper = mapper;
+            // _urlEndPointConnectivity = urlEndPointConnectivity;
+            // _replayService = replayService;
         }
 
         private bool CheckIfEndpointExists()
@@ -705,41 +449,5 @@ namespace ReactiveRealmCaching
 
             realm.Refresh();
         }
-    }
-
-
-
-    public static class LinqExtension
-    {
-        public static IEnumerable<TSource> DistinctBy<TSource, TKey>(this IEnumerable<TSource> source, Func<TSource, TKey> keySelector)
-        {
-            HashSet<TKey> seenKeys = new HashSet<TKey>();
-            foreach (TSource element in source)
-            {
-                if (seenKeys.Add(keySelector(element)))
-                {
-                    yield return element;
-                }
-            }
-        }
-
-        public static void CopyTo<T>(this IEnumerable<T>? source, ICollection<T>? dest)
-        {
-            if (source == null || dest == null)
-            {
-                return;
-            }
-
-            dest.Clear();
-            foreach (var item in source)
-            {
-                dest.Add(item);
-            }
-        }
-
-        public static bool IsEmpty<TSource>(this IEnumerable<TSource> source) => !source.Any();
-
-        [Pure]
-        public static bool IsNullOrEmpty<TSource>([NotNullWhen(false)] this IEnumerable<TSource>? source) => source == null || !source.Any();
     }
 }
