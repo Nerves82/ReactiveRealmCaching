@@ -1,8 +1,11 @@
-namespace ReactiveRealmCaching.Interfaces;
+using System;
 
-public interface ISyncResult<T>
+namespace ReactiveRealmCaching.Interfaces
 {
-	bool DidError { get; set; }
-	Exception? Exception { get; set; }
-	T Object { get; set; }
+	public interface ISyncResult<T>
+	{
+		bool DidError { get; set; }
+		Exception? Exception { get; set; }
+		T Object { get; set; }
+	}
 }

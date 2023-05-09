@@ -1,9 +1,13 @@
 
+using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Reactive.Concurrency;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
+using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -50,15 +54,16 @@ namespace ReactiveRealmCaching
             
                 _hostBuilder = host;
                 _serviceProvider = host.Build().Services;
-            
-            
-            
-            
-            // _realmService = realmService;
-            // _syncStatusService = syncStatusService;
-            // _mapper = mapper;
-            // _urlEndPointConnectivity = urlEndPointConnectivity;
-            // _replayService = replayService;
+
+               _realmService = _serviceProvider.GetService<IRealmService>();
+               _mapper = _serviceProvider.GetService<IMapper>();
+
+
+               // _realmService = realmService;
+               // _syncStatusService = syncStatusService;
+               // _mapper = mapper;
+               // _urlEndPointConnectivity = urlEndPointConnectivity;
+               // _replayService = replayService;
         }
 
         private bool CheckIfEndpointExists()
@@ -338,18 +343,28 @@ namespace ReactiveRealmCaching
                     return Observable.If(CheckIfEndpointExists, Observable.FromAsync(fetchTask)
                         .SelectMany(dtoItems =>
                         {
-                            var appModelList = _mapper.Map<IList<TDto>, IList<TAppModel>>(dtoItems);
-
-                            if (preCachingOperation != null)
+                            try
                             {
-                                var newList = preCachingOperation(appModelList);
-                                appModelList = new List<TAppModel>(newList);
+                                var appModelList = _mapper.Map<IList<TDto>, IList<TAppModel>>(dtoItems);
+
+                                if (preCachingOperation != null)
+                                {
+                                    var newList = preCachingOperation(appModelList);
+                                    appModelList = new List<TAppModel>(newList);
+                                }
+
+                                _realmService.WriteToRealmMany<TAppModel, TEntity>(appModelList);
+
+                                var items = _realmService.ReadFromRealmMany<TAppModel, TEntity>(
+                                    cacheValidationPredicate, filterClause);
+                                return Observable.Return(items);
+                            }
+                            catch (Exception e)
+                            {
+                                Console.WriteLine(e.Message);
                             }
 
-                            _realmService.WriteToRealmMany<TAppModel, TEntity>(appModelList);
-
-                            var items = _realmService.ReadFromRealmMany<TAppModel, TEntity>(cacheValidationPredicate, filterClause);
-                            return Observable.Return(items);
+                            return null;
                         }));
                 });
 

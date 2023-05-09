@@ -1,8 +1,10 @@
 
 
-namespace ReactiveRealmCaching.Interfaces;
-
-public interface ICanSync : IHaveAnObjectId
+namespace ReactiveRealmCaching.Interfaces
 {
-	bool ShouldSync { get; set; }
+
+	public interface ICanSync : IHaveAnObjectId
+	{
+		bool ShouldSync { get; set; }
+	}
 }

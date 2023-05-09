@@ -1,6 +1,8 @@
-namespace ReactiveRealmCaching.Interfaces;
-
-public interface ICanBeDeleted
+namespace ReactiveRealmCaching.Interfaces
 {
-	bool IsMarkedForDeletion { get; set; }
+
+	public interface ICanBeDeleted
+	{
+		bool IsMarkedForDeletion { get; set; }
+	}
 }

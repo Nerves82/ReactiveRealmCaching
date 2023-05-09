@@ -1,6 +1,8 @@
-namespace ReactiveRealmCaching.Interfaces;
-
-public interface IHaveAnObjectId
+namespace ReactiveRealmCaching.Interfaces
 {
-	string? ObjectId { get; }
+
+	public interface IHaveAnObjectId
+	{
+		string? ObjectId { get; }
+	}
 }

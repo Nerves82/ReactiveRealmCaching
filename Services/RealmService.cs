@@ -1,12 +1,16 @@
 
+    
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using AutoMapper;
 using ReactiveRealmCaching.Interfaces;
 using Realms;
 
-namespace ReactiveRealmCaching.Services;
-
-public class RealmService : IRealmService
+namespace ReactiveRealmCaching.Services
+{
+    public class RealmService : IRealmService
     {
         public event EventHandler<string>? RealmChanged;
         private readonly IMapper _mapper;
@@ -26,11 +30,11 @@ public class RealmService : IRealmService
             }
         }
 
-        protected virtual string UserId => Guid.NewGuid().ToString();
+        protected virtual string UserId => "eorughlasieurhbgsiuhbgqawlieurh";
 
         protected virtual RealmConfiguration RealmConfiguration
         {
-            get 
+            get
             {
                 if (string.IsNullOrWhiteSpace(UserId))
                     throw new InvalidOperationException(nameof(UserId));
@@ -79,7 +83,8 @@ public class RealmService : IRealmService
         /// <param name="expression"></param>
         /// <param name="filterClause"></param>
         /// <returns></returns>
-        public TMapped ReadFromRealmSingle<TMapped, TEntity>(Expression<Func<TEntity, bool>>? expression, string? filterClause = null) 
+        public TMapped ReadFromRealmSingle<TMapped, TEntity>(Expression<Func<TEntity, bool>>? expression,
+            string? filterClause = null)
             where TEntity : RealmObject
         {
             using var realm = CreateUserRealm();
@@ -111,7 +116,7 @@ public class RealmService : IRealmService
         /// <param name="expression"></param>
         /// <param name="filterClause"></param>
         /// <returns></returns>
-        public IList<TMapped> ReadFromRealmMany<TMapped, TEntity>(Expression<Func<TEntity, bool>>? expression, 
+        public IList<TMapped> ReadFromRealmMany<TMapped, TEntity>(Expression<Func<TEntity, bool>>? expression,
             string? filterClause = null)
             where TEntity : RealmObject
         {
@@ -120,22 +125,24 @@ public class RealmService : IRealmService
 
             if (string.IsNullOrWhiteSpace(filterClause))
             {
+                var testAll = realm.All<TEntity>();
                 all = expression != null
                     ? realm.All<TEntity>().Where(expression).ToList()
                     : realm.All<TEntity>().ToList();
             }
             else
             {
+               
                 all = expression != null
                     ? realm.All<TEntity>().Where(expression).Filter(filterClause).ToList()
                     : realm.All<TEntity>().Filter(filterClause).ToList();
             }
-            
+
 
             realm.Refresh();
             return _mapper.Map<List<TEntity>, List<TMapped>>(all);
         }
-        
+
         /// <summary>
         /// Reads Entity data using the optional Realm Filter Clause and returns the converted mapped item list.
         /// </summary>
@@ -144,17 +151,17 @@ public class RealmService : IRealmService
         /// <param name="filterClause"></param>
         /// <returns></returns>
         public IList<TMapped> ReadFromRealmManyFilter<TMapped, TEntity>(string filterClause)
-             where TEntity : RealmObject
-         {
-             using var realm = CreateUserRealm();
-             
-             List<TEntity> all = !string.IsNullOrWhiteSpace(filterClause)
-                 ? realm.All<TEntity>().Filter(filterClause).ToList()
-                 : realm.All<TEntity>().ToList();
-        
-             realm.Refresh();
-             return _mapper.Map<List<TEntity>, List<TMapped>>(all);
-         }
+            where TEntity : RealmObject
+        {
+            using var realm = CreateUserRealm();
+
+            List<TEntity> all = !string.IsNullOrWhiteSpace(filterClause)
+                ? realm.All<TEntity>().Filter(filterClause).ToList()
+                : realm.All<TEntity>().ToList();
+
+            realm.Refresh();
+            return _mapper.Map<List<TEntity>, List<TMapped>>(all);
+        }
 
         /// <summary>
         /// Writes the mapped item to the database.
@@ -167,15 +174,12 @@ public class RealmService : IRealmService
             where TEntity : RealmObject
         {
             var entity = _mapper.Map<TMapped, TEntity>(mapped);
-            TEntity? returnEntity = null;
-            
+            TEntity returnEntity = null;
+
             using var realm = CreateUserRealm();
-            realm.Write(() =>
-            {
-                returnEntity = realm.Add(entity, true);
-            });
+            realm.Write(() => { returnEntity = realm.Add(entity, true); });
             realm.Refresh();
-            
+
             var returnMapped = _mapper.Map<TEntity, TMapped>(returnEntity);
             return returnMapped;
         }
@@ -219,7 +223,7 @@ public class RealmService : IRealmService
         /// <typeparam name="TEntity"></typeparam>
         /// <param name="expression"></param>
         /// <returns></returns>
-        public int GetRealmCount<TEntity>(Expression<Func<TEntity, bool>>? expression = null) 
+        public int GetRealmCount<TEntity>(Expression<Func<TEntity, bool>>? expression = null)
             where TEntity : RealmObject
         {
             using var realm = CreateUserRealm();
@@ -238,7 +242,7 @@ public class RealmService : IRealmService
         /// <typeparam name="TEntity"></typeparam>
         /// <param name="expression"></param>
         /// <returns></returns>
-        public IList<TMapped> MarkAsDeletedRealm<TMapped, TEntity>(Expression<Func<TEntity, bool>>? expression) 
+        public IList<TMapped> MarkAsDeletedRealm<TMapped, TEntity>(Expression<Func<TEntity, bool>>? expression)
             where TEntity : RealmObject, ICanBeDeleted
         {
             using var realm = CreateUserRealm();
@@ -270,14 +274,11 @@ public class RealmService : IRealmService
         {
             using var realm = CreateUserRealm();
 
-            realm.Write(() =>
-            {
-                realm.RemoveRange(realm.All<TEntity>().Where(expression));
-            });
+            realm.Write(() => { realm.RemoveRange(realm.All<TEntity>().Where(expression)); });
 
             realm.Refresh();
         }
-        
+
         /// <summary>
         /// Removes the Entity item from the database based on the expression.
         /// </summary>
@@ -314,7 +315,7 @@ public class RealmService : IRealmService
         /// <typeparam name="T"></typeparam>
         /// <param name="reference"></param>
         /// <returns></returns>
-        public T ResolveReference<T>(ThreadSafeReference.Object<T>? reference) 
+        public T ResolveReference<T>(ThreadSafeReference.Object<T>? reference)
             where T : RealmObjectBase
         {
             var instance = Realms.Realm.GetInstance(RealmConfiguration);
@@ -334,7 +335,7 @@ public class RealmService : IRealmService
             var instance = Realms.Realm.GetInstance(RealmConfiguration);
             return instance.ResolveReference(reference);
         }
-        
+
         /// <summary>
         /// Edits the mapped item list and writes to the database.
         /// </summary>
@@ -343,7 +344,8 @@ public class RealmService : IRealmService
         /// <param name="expression"></param>
         /// <param name="edit"></param>
         /// <returns></returns>
-        public IList<TMapped> EditListRealmMany<TMapped, TEntity>(Expression<Func<TEntity, bool>>? expression, Func<TEntity, object> edit)
+        public IList<TMapped> EditListRealmMany<TMapped, TEntity>(Expression<Func<TEntity, bool>>? expression,
+            Func<TEntity, object> edit)
             where TEntity : RealmObject
         {
             var returnMappedList = new List<TMapped>();
@@ -355,10 +357,7 @@ public class RealmService : IRealmService
 
             if (all.Any())
             {
-                realm.Write(() =>
-                {
-                    all.ForEach(x => edit(x));
-                });
+                realm.Write(() => { all.ForEach(x => edit(x)); });
                 realm.Refresh();
 
                 returnMappedList = _mapper.Map<List<TEntity>, List<TMapped>>(all);
@@ -367,3 +366,4 @@ public class RealmService : IRealmService
             return returnMappedList;
         }
     }
+}
