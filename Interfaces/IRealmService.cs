@@ -9,6 +9,8 @@ namespace ReactiveRealmCaching.Interfaces
 
 	internal interface IRealmService
 	{
+		void UpdateDatabaseId(string id);
+		
 		/// <summary>
 		/// Initializes user realm database
 		/// </summary>

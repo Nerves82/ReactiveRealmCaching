@@ -10,6 +10,7 @@ namespace ReactiveRealmCaching.Interfaces
 
 	public interface ICachingService
 	{
+		void UpdateDatabaseId(string id);
 		Task<bool> CheckIfEndpointExistsAsync(Uri url);
 
 		/// <summary>

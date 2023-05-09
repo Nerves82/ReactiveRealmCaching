@@ -29,13 +29,8 @@ namespace ReactiveRealmCaching
         
         private readonly IRealmService _realmService;
         private readonly IMapper _mapper;
-
         private IHostBuilder _hostBuilder;
-
         private IServiceProvider _serviceProvider;
-        // private readonly IUriEndpointConnectivityHelper _urlEndPointConnectivity;
-        // private readonly IReplayService _replayService;
-        // private readonly ISyncStatusService _syncStatusService;
 
         public CachingService(MapperConfiguration mapperConfiguration)
         {
@@ -57,13 +52,11 @@ namespace ReactiveRealmCaching
 
                _realmService = _serviceProvider.GetService<IRealmService>();
                _mapper = _serviceProvider.GetService<IMapper>();
+        }
 
-
-               // _realmService = realmService;
-               // _syncStatusService = syncStatusService;
-               // _mapper = mapper;
-               // _urlEndPointConnectivity = urlEndPointConnectivity;
-               // _replayService = replayService;
+        public void UpdateDatabaseId(string id)
+        {
+            _realmService.UpdateDatabaseId(id);
         }
 
         private bool CheckIfEndpointExists()

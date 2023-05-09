@@ -14,6 +14,7 @@ namespace ReactiveRealmCaching.Services
     {
         public event EventHandler<string>? RealmChanged;
         private readonly IMapper _mapper;
+        private string _databaseId;
 
         public RealmService(IMapper mapper)
         {
@@ -30,17 +31,34 @@ namespace ReactiveRealmCaching.Services
             }
         }
 
-        protected virtual string UserId => "eorughlasieurhbgsiuhbgqawlieurh";
+        internal string DatabaseId
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(_databaseId))
+                {
+                    _databaseId = new Guid().ToString();
+                }
+
+                return _databaseId;
+            }
+            set => _databaseId = value;
+        }
 
         protected virtual RealmConfiguration RealmConfiguration
         {
             get
             {
-                if (string.IsNullOrWhiteSpace(UserId))
-                    throw new InvalidOperationException(nameof(UserId));
+                if (string.IsNullOrWhiteSpace(DatabaseId))
+                    throw new InvalidOperationException(nameof(DatabaseId));
 
-                return new RealmConfiguration($"{UserId}.realm");
+                return new RealmConfiguration($"{DatabaseId}.realm");
             }
+        }
+
+        public void UpdateDatabaseId(string id)
+        {
+            _databaseId = id;
         }
 
         /// <summary>
@@ -67,9 +85,9 @@ namespace ReactiveRealmCaching.Services
             var realm = Realms.Realm.GetInstance(config);
             realm.RealmChanged += (sender, eventArgs) =>
             {
-                if (!string.IsNullOrWhiteSpace(UserId))
+                if (!string.IsNullOrWhiteSpace(DatabaseId))
                 {
-                    RealmChanged?.Invoke(this, UserId);
+                    RealmChanged?.Invoke(this, DatabaseId);
                 }
             };
             return realm;
