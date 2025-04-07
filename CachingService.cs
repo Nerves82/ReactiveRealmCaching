@@ -12,10 +12,11 @@ using AutoMapper;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Maui.Networking;
+using Microsoft.Maui.Storage;
 using ReactiveRealmCaching.Interfaces;
 using ReactiveRealmCaching.Services;
 using Realms;
-using Xamarin.Essentials;
 
 namespace ReactiveRealmCaching
 {

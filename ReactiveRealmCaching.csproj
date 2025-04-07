@@ -6,20 +6,21 @@
 		<SingleProject>true</SingleProject>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageId>ReactiveRealmCaching</PackageId>
-		<Version>1.0.5</Version>
+		<Version>1.0.7</Version>
 		<Authors>Brewer</Authors>
 		<Company>NervousMotions</Company>
 		<RootNamespace>ReactiveRealmCaching</RootNamespace>
 		<AssemblyName>ReactiveRealmCaching</AssemblyName>
 		<Product>ReactiveRealmCaching</Product>
 		<TargetFramework>netstandard2.1</TargetFramework>
+		<Description>Local caching using maui, realm and reactive</Description>
+		<PackageTags>nuget</PackageTags>
 	</PropertyGroup>
 	<ItemGroup>
 		<PackageReference Include="AutoMapper" Version="12.0.1" />
 		<PackageReference Include="Microsoft.Extensions.Hosting" Version="7.0.1" />
-		<PackageReference Include="Realm" Version="10.21.1" />
-		<PackageReference Include="System.Reactive" Version="5.0.0" />
-		<PackageReference Include="Xamarin.Essentials" Version="1.7.5" />
-		<PackageReference Include="Xamarin.Forms" Version="5.0.0.2578" />
+		<PackageReference Include="Microsoft.Maui.Core" Version="9.0.50" />
+		<PackageReference Include="Realm" Version="11.2.0" />
+		<PackageReference Include="System.Reactive" Version="6.0.0" />
 	</ItemGroup>
 </Project>
